@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Power Gold</string>
+    <string name="app_subtitle">منظومة القتال التكتيكي والطقس الديناميكي</string>
+    <string name="sign_in_google">تسجيل الدخول بحساب Google</string>
+    <string name="sign_out">تسجيل الخروج</string>
+    <string name="deploy_battle">انزل إلى المعركة</string>
+    <string name="nav_lobby">القيادة</string>
+    <string name="nav_armory">الترسانة</string>
+    <string name="nav_records">السجل</string>
+    <string name="nav_settings">الإعدادات</string>
+</resources>

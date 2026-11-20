@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidWeapon(w) {
+      return w in ['M4A1', 'AK47', 'AWM', 'M249'];
+    }
+
+    function isValidTactical(t) {
+      return t in ['AIRSTRIKE', 'UAV_DRONE', 'ARMOR_DROP'];
+    }
+
+    function isValidAttachment(a) {
+      return a in ['HOLO_OPTIC', 'SUPPRESSOR', 'EXTENDED_MAG', 'TACTICAL_GRIP'];
+    }
+
+    function isValidMap(m) {
+      return m in ['DESERT_STORM', 'URBAN_SIEGE', 'ARCTIC_OUTPOST'];
+    }
+
+    function isValidMode(m) {
+      return m in ['BATTLE_ROYALE', 'TACTICAL_SURVIVAL', 'SNIPER_OPS'];
+    }
+
+    function isValidOutcome(o) {
+      return o in ['VICTORY', 'ELIMINATED', 'EXTRACTED'];
+    }
+
+    function isValidSoldierProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.callsign is string && data.callsign.size() >= 2 && data.callsign.size() <= 30 &&
+             data.rankTitle is string && data.rankTitle.size() >= 2 && data.rankTitle.size() <= 40 &&
+             data.xp is int && data.xp >= 0 && data.xp <= 100000000 &&
+             data.totalKills is int && data.totalKills >= 0 && data.totalKills <= 10000000 &&
+             data.headshots is int && data.headshots >= 0 && data.headshots <= 10000000 &&
+             data.matchesPlayed is int && data.matchesPlayed >= 0 && data.matchesPlayed <= 10000000 &&
+             data.wins is int && data.wins >= 0 && data.wins <= 10000000 &&
+             data.bestScore is int && data.bestScore >= 0 && data.bestScore <= 100000000 &&
+             isValidWeapon(data.equippedWeapon) &&
+             isValidTactical(data.equippedTactical) &&
+             isValidAttachment(data.equippedAttachment) &&
+             isValidMap(data.preferredMap) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBattleRecord(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidMap(data.mapId) &&
+             isValidMode(data.modeId) &&
+             isValidWeapon(data.weaponId) &&
+             data.kills is int && data.kills >= 0 && data.kills <= 999 &&
+             data.headshots is int && data.headshots >= 0 && data.headshots <= 999 &&
+             data.damageDealt is int && data.damageDealt >= 0 && data.damageDealt <= 1000000 &&
+             data.survivalSeconds is int && data.survivalSeconds >= 0 && data.survivalSeconds <= 86400 &&
+             data.score is int && data.score >= 0 && data.score <= 10000000 &&
+             isValidOutcome(data.outcome) &&
+             data.weathersEncountered is list &&
+             data.weathersEncountered.size() >= 1 && data.weathersEncountered.size() <= 10 &&
+             data.weathersEncountered[0] is string && data.weathersEncountered[0].size() <= 32 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'callsign', 'rankTitle', 'xp', 'totalKills',
+                         'headshots', 'matchesPlayed', 'wins', 'bestScore',
+                         'equippedWeapon', 'equippedTactical', 'equippedAttachment',
+                         'preferredMap', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'callsign', 'rankTitle', 'xp', 'totalKills',
+                         'headshots', 'matchesPlayed', 'wins', 'bestScore',
+                         'equippedWeapon', 'equippedTactical', 'equippedAttachment',
+                         'preferredMap', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidSoldierProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidSoldierProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action 1: Loadout / Profile Update
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'callsign', 'equippedWeapon', 'equippedTactical',
+                           'equippedAttachment', 'preferredMap', 'updatedAt'
+                         ]) ||
+                         // Action 2: Post-Match Career Stats Update
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'rankTitle', 'xp', 'totalKills', 'headshots',
+                           'matchesPlayed', 'wins', 'bestScore', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+      match /matches/{matchId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(matchId) && request.auth.uid == userId;
+        allow list: if isSignedIn() && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(matchId) &&
+                         request.auth.uid == userId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll([
+                           'userId', 'mapId', 'modeId', 'weaponId', 'kills',
+                           'headshots', 'damageDealt', 'survivalSeconds',
+                           'score', 'outcome', 'weathersEncountered', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'mapId', 'modeId', 'weaponId', 'kills',
+                           'headshots', 'damageDealt', 'survivalSeconds',
+                           'score', 'outcome', 'weathersEncountered', 'createdAt'
+                         ]) &&
+                         isValidBattleRecord(incoming());
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(matchId) && request.auth.uid == userId;
+      }
+    }
+  }
+}

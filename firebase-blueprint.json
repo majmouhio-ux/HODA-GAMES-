@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "SoldierProfile": {
+      "title": "SoldierProfile",
+      "description": "Authenticated player's Battle Storm career profile, rank, combat stats, and equipped tactical loadout.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID matching request.auth.uid."
+        },
+        "callsign": {
+          "type": "string",
+          "description": "Tactical operator callsign (2-30 chars)."
+        },
+        "rankTitle": {
+          "type": "string",
+          "description": "Current military rank title."
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Total earned combat XP."
+        },
+        "totalKills": {
+          "type": "integer",
+          "description": "Lifetime enemy eliminations."
+        },
+        "headshots": {
+          "type": "integer",
+          "description": "Lifetime precision headshots."
+        },
+        "matchesPlayed": {
+          "type": "integer",
+          "description": "Total completed matches."
+        },
+        "wins": {
+          "type": "integer",
+          "description": "Total Battle Royale victories."
+        },
+        "bestScore": {
+          "type": "integer",
+          "description": "Highest single-match combat score."
+        },
+        "equippedWeapon": {
+          "type": "string",
+          "enum": ["M4A1", "AK47", "AWM", "M249"],
+          "description": "Currently equipped primary weapon ID."
+        },
+        "equippedTactical": {
+          "type": "string",
+          "enum": ["AIRSTRIKE", "UAV_DRONE", "ARMOR_DROP"],
+          "description": "Currently equipped tactical support streak."
+        },
+        "equippedAttachment": {
+          "type": "string",
+          "enum": ["HOLO_OPTIC", "SUPPRESSOR", "EXTENDED_MAG", "TACTICAL_GRIP"],
+          "description": "Currently equipped weapon attachment."
+        },
+        "preferredMap": {
+          "type": "string",
+          "enum": ["DESERT_STORM", "URBAN_SIEGE", "ARCTIC_OUTPOST"],
+          "description": "Selected warzone theater map."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Profile creation server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "callsign",
+        "rankTitle",
+        "xp",
+        "totalKills",
+        "headshots",
+        "matchesPlayed",
+        "wins",
+        "bestScore",
+        "equippedWeapon",
+        "equippedTactical",
+        "equippedAttachment",
+        "preferredMap",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BattleRecord": {
+      "title": "BattleRecord",
+      "description": "Immutable after-action combat report for a completed Battle Royale match including dynamic weather conditions encountered.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID."
+        },
+        "mapId": {
+          "type": "string",
+          "enum": ["DESERT_STORM", "URBAN_SIEGE", "ARCTIC_OUTPOST"],
+          "description": "Warzone map identifier."
+        },
+        "modeId": {
+          "type": "string",
+          "enum": ["BATTLE_ROYALE", "TACTICAL_SURVIVAL", "SNIPER_OPS"],
+          "description": "Combat mode identifier."
+        },
+        "weaponId": {
+          "type": "string",
+          "enum": ["M4A1", "AK47", "AWM", "M249"],
+          "description": "Primary weapon used."
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Eliminations achieved during the match."
+        },
+        "headshots": {
+          "type": "integer",
+          "description": "Headshots achieved during the match."
+        },
+        "damageDealt": {
+          "type": "integer",
+          "description": "Total damage inflicted."
+        },
+        "survivalSeconds": {
+          "type": "integer",
+          "description": "Match survival duration in seconds."
+        },
+        "score": {
+          "type": "integer",
+          "description": "Final tactical match score."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["VICTORY", "ELIMINATED", "EXTRACTED"],
+          "description": "Final match result."
+        },
+        "weathersEncountered": {
+          "type": "string",
+          "description": "Bounded list of weather state IDs experienced during the match."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Match completion server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "mapId",
+        "modeId",
+        "weaponId",
+        "kills",
+        "headshots",
+        "damageDealt",
+        "survivalSeconds",
+        "score",
+        "outcome",
+        "weathersEncountered",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/SoldierProfile"
+      },
+      "description": "Owner-isolated soldier career profile and loadout."
+    },
+    "/users/{userId}/matches/{matchId}": {
+      "schema": {
+        "$ref": "#/entities/BattleRecord"
+      },
+      "description": "Owner-isolated immutable combat history records."
+    }
+  }
+}

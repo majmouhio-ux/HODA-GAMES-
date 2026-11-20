@@ -1,0 +1,6 @@
+{
+  "name": "Power Gold",
+  "description": "لعبة باتل رويال حربية ثلاثية الأبعاد بجرافيك متقدم ونظام طقس ديناميكي متغير يؤثر على الرؤية والصوت والحركة والأسلحة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
