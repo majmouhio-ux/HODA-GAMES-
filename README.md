@@ -1,0 +1,2 @@
+This prompt needs an AI coding tool like Claude Code, Codex, Grok Build or Antigravity to set up Unity on your computer. If you're in a chat-only tool, install one of those first, then paste this prompt into it.
+I want to make a game with Unity and I'm new to it. Install the Unity CLI (macOS/Linux: `curl -fsSL https://unity.com/install.sh | bash`, Windows: `irm https://unity.com/install.ps1 | iex`), follow what the installer tells you to do next, then use the new-unity-project skill to go from my idea to a running project.
